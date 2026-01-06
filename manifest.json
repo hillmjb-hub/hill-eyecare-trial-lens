@@ -1,0 +1,10 @@
+{
+  "name": "CL Trial Lens Order",
+  "short_name": "CL Order",
+  "start_url": "./index.html",
+  "orientation": "portrait",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#0b3d91",
+  "icons": []
+}
