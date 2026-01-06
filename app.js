@@ -857,7 +857,7 @@ const itemsHtml = lines.map(x => `
 <head>
   <meta charset="utf-8" />
   <title>Trial Lens Order</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     body { margin: 18px; }
@@ -872,21 +872,30 @@ const itemsHtml = lines.map(x => `
       .actions { display:none !important; }
       body { margin: 10mm; }
     }
-    .items {
-      column-count: 2;
-      column-gap: 60px;
-      margin-top: 18px;
-    }
-    .item {
+    /* Make text readable on phones */
+h1 { font-size: clamp(18px, 4.8vw, 22px); }
+.metaRight, .subtle { font-size: clamp(12px, 3.4vw, 14px); }
+
+/* Two columns on larger screens, one column on phones */
+.items {
+  column-count: 2;
+  column-gap: 36px;
+  margin-top: 18px;
+}
+
+.item {
   break-inside: avoid;
   border-bottom: 1px solid #e2e8f0;
-  padding: 6px 0;
-  font-size: 12px;
-  line-height: 1.2;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  padding: 8px 0;
+  font-size: clamp(14px, 3.8vw, 16px);
+  line-height: 1.25;
+  white-space: normal; /* allow wrapping on phones */
+}
+
+/* Phone: switch to 1 column so it doesn't shrink */
+@media (max-width: 600px) {
+  body { margin: 12px; }
+  .items { column-count: 1; }
 }
 
 .itemText {
