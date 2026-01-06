@@ -872,46 +872,46 @@ const itemsHtml = lines.map(x => `
       .actions { display:none !important; }
       body { margin: 10mm; }
     }
+
     /* Make text readable on phones */
-h1 { font-size: clamp(18px, 4.8vw, 22px); }
-.metaRight, .subtle { font-size: clamp(12px, 3.4vw, 14px); }
+    h1 { font-size: clamp(18px, 4.8vw, 22px); }
+    .metaRight, .subtle { font-size: clamp(12px, 3.4vw, 14px); }
 
-/* Two columns on larger screens, one column on phones */
-.items {
-  column-count: 2;
-  column-gap: 36px;
-  margin-top: 18px;
-}
+    /* Two columns on larger screens, one column on phones */
+    .items {
+      column-count: 2;
+      column-gap: 18px;
+      margin-top: 10px;
+    }
 
-.item {
-  break-inside: avoid;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 8px 0;
-  font-size: clamp(14px, 3.8vw, 16px);
-  line-height: 1.25;
-  white-space: normal; /* allow wrapping on phones */
-}
+    .item {
+      break-inside: avoid;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px 0;
+      font-size: clamp(14px, 3.8vw, 16px);
+      line-height: 1.25;
+      white-space: normal; /* allow wrapping on phones */
+    }
 
-/* Phone: switch to 1 column so it doesn't shrink */
-@media (max-width: 600px) {
-  body { margin: 12px; }
-  .items { column-count: 1; }
-}
+    /* Phone: switch to 1 column so it doesn't shrink */
+    @media (max-width: 600px) {
+      body { margin: 12px; }
+      .items { column-count: 1; }
+    }
 
-.itemText {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+    .itemText {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-.checkBox {
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid #64748b;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
+    .checkBox {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #64748b;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
