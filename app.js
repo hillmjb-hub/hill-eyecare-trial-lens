@@ -963,7 +963,7 @@ button { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; back
 </body>
 </html>`;
 
-  const w = window.open("", "_blank");
+  const w = window.location.href = url;
   w.document.open();
   w.document.write(html);
   w.document.close();
