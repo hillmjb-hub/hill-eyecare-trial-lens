@@ -943,7 +943,7 @@ button { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; back
 <body>
   <div class="top">
     <div>
-      <h1>Trial Lens Order <span style="font-size:12px; color:#64748b;">(vTEST)</span></h1>
+      <h1>Trial Lens Order</h1>
       <div class="subtle">Generated: ${escapeHtml(dateStr)}</div>
     </div>
     <div class="metaRight">
