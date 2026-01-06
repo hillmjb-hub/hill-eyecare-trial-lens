@@ -963,10 +963,14 @@ button { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; back
 </body>
 </html>`;
 
-  const w = window.location.href = url;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+const url = URL.createObjectURL(blob);
+
+// Open as a real page load so Android Chrome applies viewport correctly
+window.open(url, "_blank");
+
+// Optional: clean up the blob URL after a bit
+setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 function escapeHtml(s) {
