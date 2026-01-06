@@ -877,41 +877,67 @@ const itemsHtml = lines.map(x => `
     h1 { font-size: clamp(18px, 4.8vw, 22px); }
     .metaRight, .subtle { font-size: clamp(12px, 3.4vw, 14px); }
 
-    /* Two columns on larger screens, one column on phones */
-    .items {
-      column-count: 2;
-      column-gap: 18px;
-      margin-top: 10px;
-    }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 12px; }
 
-    .item {
-      break-inside: avoid;
-      border-bottom: 1px solid #e2e8f0;
-      padding: 8px 0;
-      font-size: clamp(14px, 3.8vw, 16px);
-      line-height: 1.25;
-      white-space: normal; /* allow wrapping on phones */
-    }
+.top { display:flex; justify-content:space-between; align-items:flex-start; gap: 16px; }
+h1 { margin: 0; font-size: 22px; }
+.metaRight { font-size: 14px; color:#111; text-align:right; }
+.metaRight .label { color:#334155; }
+.subtle { color:#475569; font-size: 13px; margin-top: 2px; }
 
-    /* Phone: switch to 1 column so it doesn't shrink */
-    @media (max-width: 600px) {
-      body { margin: 12px; }
-      .items { column-count: 1; }
-    }
+.actions { margin: 10px 0 12px; display:flex; gap: 10px; }
+button { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; background: white; cursor:pointer; font-size: 14px; }
 
-    .itemText {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+@media print {
+  .actions { display:none !important; }
+  body { margin: 10mm; }
+}
 
-    .checkBox {
-      width: 14px;
-      height: 14px;
-      border: 1.5px solid #64748b;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
+/* ✅ Replace CSS columns with grid */
+.items {
+  display: grid;
+  grid-template-columns: 1fr;   /* phone default */
+  gap: 6px 18px;
+  margin-top: 10px;
+}
+
+@media (min-width: 900px) {
+  body { margin: 18px; }
+  .items { grid-template-columns: 1fr 1fr; } /* 2 columns on desktop/tablet */
+  .subtle { font-size: 11px; }
+  .metaRight { font-size: 12px; }
+  button { font-size: 12px; }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 0;
+  font-size: 16px;            /* readable on phone */
+  line-height: 1.25;
+}
+
+@media (min-width: 900px) {
+  .item { font-size: 12px; }  /* tighter on desktop */
+}
+
+.itemText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;         /* keep single line; remove if you want wrapping */
+}
+
+.checkBox {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #64748b;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
   </style>
 </head>
 <body>
