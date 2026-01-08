@@ -836,20 +836,15 @@ function exportPrintView() {
   const now = new Date();
   const dateStr = now.toLocaleString();
 
-  // One line per item, include Qty
-const lines = getSortedCartForExport().map(i => {
-  return {
-    label: formatPrintLine(i),
-    qty: i.qty || 1
-  };
-});
+  const lines = getSortedCartForExport().map(i => {
+    const label = formatPrintLine(i);
+    const qty = i.qty || 1;
+    return `${label}    (Qty: ${qty})`;
+  });
 
-const itemsHtml = lines.map(x => `
-  <div class="item">
-    <span class="itemText">${escapeHtml(x.label)}    (Qty: ${x.qty})</span>
-    <span class="checkBox"></span>
-  </div>
-`).join("");
+  const itemsHtml = lines
+    .map(t => `<div class="item">${escapeHtml(t)}</div>`)
+    .join("");
 
   const html = `
 <!doctype html>
@@ -857,100 +852,48 @@ const itemsHtml = lines.map(x => `
 <head>
   <meta charset="utf-8" />
   <title>Trial Lens Order</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     body { margin: 18px; }
-    .top { display:flex; justify-content:space-between; align-items:flex-start; gap: 16px; }
-    h1 { margin: 0; font-size: 23px; }
-    .metaRight { font-size: 12px; color:#111; text-align:right; }
-    .metaRight .label { color:#334155; }
-    .subtle { color:#475569; font-size: 11px; margin-top: 2px; }
-    .actions { margin: 10px 0 12px; display:flex; gap: 10px; }
-    button { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; background: white; cursor:pointer; font-size: 12px; }
+    h1 { margin: 0; font-size: 18px; }
+    .subtle { color: #475569; font-size: 11px; margin-top: 2px; }
+    .actions { margin: 12px 0; display: flex; gap: 10px; }
+    button {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
     @media print {
-      .actions { display:none !important; }
+      .actions { display: none !important; }
       body { margin: 10mm; }
     }
 
-    /* Make text readable on phones */
-    h1 { font-size: clamp(18px, 4.8vw, 22px); }
-    .metaRight, .subtle { font-size: clamp(12px, 3.4vw, 14px); }
+    .items {
+      column-count: 2;
+      column-gap: 18px;
+      margin-top: 12px;
+    }
 
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 12px; }
-
-.top { display:flex; justify-content:space-between; align-items:flex-start; gap: 16px; }
-h1 { margin: 0; font-size: 22px; }
-.metaRight { font-size: 14px; color:#111; text-align:right; }
-.metaRight .label { color:#334155; }
-.subtle { color:#475569; font-size: 13px; margin-top: 2px; }
-
-.actions { margin: 10px 0 12px; display:flex; gap: 10px; }
-button { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; background: white; cursor:pointer; font-size: 14px; }
-
-@media print {
-  .actions { display:none !important; }
-  body { margin: 10mm; }
-}
-
-/* ✅ Replace CSS columns with grid */
-.items {
-  display: grid;
-  grid-template-columns: 1fr;   /* phone default */
-  gap: 6px 18px;
-  margin-top: 10px;
-}
-
-@media (min-width: 900px) {
-  body { margin: 18px; }
-  .items { grid-template-columns: 1fr 1fr; } /* 2 columns on desktop/tablet */
-  .subtle { font-size: 11px; }
-  .metaRight { font-size: 12px; }
-  button { font-size: 12px; }
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 8px 0;
-  font-size: 16px;            /* readable on phone */
-  line-height: 1.25;
-}
-
-@media (min-width: 900px) {
-  .item { font-size: 12px; }  /* tighter on desktop */
-}
-
-.itemText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;         /* keep single line; remove if you want wrapping */
-}
-
-.checkBox {
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid #64748b;
-  border-radius: 3px;
-  flex: 0 0 auto;
-}
+    .item {
+      break-inside: avoid;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 6px 0;
+      font-size: 12px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
-  <div class="top">
-    <div>
-      <h1>Trial Lens Order</h1>
-      <div class="subtle">Generated: ${escapeHtml(dateStr)}</div>
-    </div>
-    <div class="metaRight">
-      <div><span class="label">Ordered by:</span> __________________</div>
-      <div style="margin-top:6px;"><span class="label">Date ordered:</span> __________________</div>
-    </div>
-  </div>
+  <h1>Trial Lens Order</h1>
+  <div class="subtle">Generated: ${escapeHtml(dateStr)}</div>
 
   <div class="actions">
     <button onclick="window.print()">Print</button>
@@ -963,18 +906,10 @@ button { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; back
 </body>
 </html>`;
 
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-const url = URL.createObjectURL(blob);
-
-// Open as a real page load so Android Chrome applies viewport correctly
-window.open(url, "_blank");
-
-// Optional: clean up the blob URL after a bit
-setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const w = window.open("", "_blank");
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
 }
 
 /**********************
