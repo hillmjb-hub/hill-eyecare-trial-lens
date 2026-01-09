@@ -337,7 +337,8 @@ function breadcrumb(parts) {
  * 4) RENDER
  **********************/
 const app = document.getElementById("app");
-document.getElementById("goCartBtn").onclick = () => goTo("cart");
+const goCartBtn = document.getElementById("goCartBtn");
+if (goCartBtn) goCartBtn.onclick = () => goTo("cart");
 
 function render() {
   app.innerHTML = "";
