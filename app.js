@@ -238,6 +238,37 @@ function fmtPower(n) {
   return `${sign}${n.toFixed(2)}`;
 }
 
+function feedback() {
+  // Haptic
+  try {
+    if (navigator.vibrate) navigator.vibrate(15);
+  } catch {}
+
+  // Soft click sound
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.type = "square";
+    o.frequency.value = 650; // click-ish
+    g.gain.value = 0.03;     // quiet
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.start();
+    // very short blip
+    setTimeout(() => {
+      o.stop();
+      ctx.close();
+    }, 18);
+  } catch {}
+}
+
 function saveCart() {
   localStorage.setItem("cl_cart", JSON.stringify(state.cart));
   updateCartCount();
@@ -267,6 +298,7 @@ function addToCart(newItem) {
   if (existing) existing.qty += 1;
   else state.cart.push({ ...newItem, qty: 1 });
   saveCart();
+  feedback();
 }
 
 function removeFromCart(index) {
@@ -672,8 +704,8 @@ function renderCart() {
 
   const exportBtn = document.createElement("button");
   exportBtn.className = "small primary";
-  exportBtn.textContent = "Export / Print";
-  exportBtn.onclick = exportPrintView;
+  exportBtn.textContent = "Print / Download PDF";
+  exportBtn.onclick = () => exportPrintView({ autoPrint: true });
   top.appendChild(exportBtn);
 
   const clearBtn = document.createElement("button");
@@ -699,17 +731,16 @@ function renderCart() {
 
   const table = document.createElement("table");
   table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Manufacturer</th>
-        <th>Lens</th>
-        <th>Parameters</th>
-        <th class="qty">Qty</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  `;
+  <thead>
+    <tr>
+      <th>Lens</th>
+      <th>Parameters</th>
+      <th class="qty">Qty</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+`;
 
   const tbody = table.querySelector("tbody");
 
@@ -719,14 +750,13 @@ function renderCart() {
     const params = formatParams(item);
 
     tr.innerHTML = `
-      <td>${escapeHtml(item.manufacturer)}</td>
-      <td>${escapeHtml(item.lens)}</td>
-      <td>${escapeHtml(params)}</td>
-      <td></td>
-      <td></td>
-    `;
+  <td>${escapeHtml(item.lens)}</td>
+  <td>${escapeHtml(params)}</td>
+  <td></td>
+  <td></td>
+`;
 
-    const qtyTd = tr.children[3];
+    const qtyTd = tr.children[2];
     const qtyInput = document.createElement("input");
     qtyInput.type = "number";
     qtyInput.min = "1";
@@ -738,7 +768,7 @@ function renderCart() {
     };
     qtyTd.appendChild(qtyInput);
 
-    const delTd = tr.children[4];
+    const delTd = tr.children[3];
     const delBtn = document.createElement("button");
     delBtn.className = "small danger";
     delBtn.textContent = "Delete";
@@ -788,7 +818,7 @@ function getSortedCartForExport() {
   });
 }
 
-function exportPrintView() {
+function exportPrintView(opts = {}) {
   const now = new Date();
   const dateStr = now.toLocaleString();
 
@@ -851,9 +881,9 @@ function exportPrintView() {
       gap: 8px;
 
       border-bottom: 1px solid #e2e8f0;
-      padding: 4px 0;
+      padding: 5px 0;
 
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.1;
     }
 
@@ -899,6 +929,16 @@ function exportPrintView() {
   w.document.open();
   w.document.write(html);
   w.document.close();
+
+// Auto-open print dialog (used by Order page Print / Download PDF buttons)
+if (opts.autoPrint) {
+  // Wait for content to render before printing
+  w.onload = () => {
+    try { w.focus(); } catch {}
+    try { w.print(); } catch {}
+  };
+}
+
 }
 
 
