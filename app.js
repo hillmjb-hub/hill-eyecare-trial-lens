@@ -1,11 +1,41 @@
 /**********************
- * 1) CATALOG (EDIT ME)
+ * 0) SMALL SAFETY GUARDS
+ **********************/
+function $(id) { return document.getElementById(id); }
+
+/**********************
+ * 1) HELPERS (MUST COME BEFORE CATALOG)
+ **********************/
+function round2(n) { return Math.round(n * 100) / 100; }
+function fmtPower(n) {
+  const sign = n > 0 ? "+" : "";
+  return `${sign}${n.toFixed(2)}`;
+}
+function makeSpherePowers(maxPlus, maxMinus, step) {
+  const arr = [];
+  for (let v = maxPlus; v >= 0; v = round2(v - step)) arr.push(fmtPower(v));
+  for (let v = -step; v >= maxMinus; v = round2(v - step)) arr.push(fmtPower(v));
+  return arr;
+}
+function makeAxisList(step) {
+  const out = [];
+  for (let a = step; a <= 180; a += step) out.push(String(a).padStart(3, "0"));
+  return out;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
+}
+
+/**********************
+ * 2) CATALOG (EDIT ME)
  **********************/
 const CATALOG = [
-
-  /* =========================
-     ACUVUE (JOHNSON & JOHNSON)
-     ========================= */
   {
     manufacturer: "Acuvue (J&J)",
     lenses: [
@@ -34,10 +64,6 @@ const CATALOG = [
       { name: "Oasys Max 1-Day", type: "sphere", powers: makeSpherePowers(+6.00, -12.00, 0.25) }
     ]
   },
-
-  /* =================
-     COOPERVISION
-     ================= */
   {
     manufacturer: "CooperVision",
     lenses: [
@@ -73,10 +99,6 @@ const CATALOG = [
       }
     ]
   },
-
-  /* =================
-     ALCON
-     ================= */
   {
     manufacturer: "Alcon",
     lenses: [
@@ -108,10 +130,6 @@ const CATALOG = [
       }
     ]
   },
-
-  /* =========================
-     BAUSCH & LOMB
-     ========================= */
   {
     manufacturer: "Bausch & Lomb",
     lenses: [
@@ -146,47 +164,39 @@ const CATALOG = [
       }
     ]
   }
-
 ];
 
-
 /**********************
- * 2) STATE
+ * 3) STATE + NAV
  **********************/
+function loadCart() {
+  try { return JSON.parse(localStorage.getItem("cl_cart")) ?? []; }
+  catch { return []; }
+}
 const state = {
-  view: "manufacturers", // manufacturers | lenses | powers | cart
+  view: "manufacturers",
   manufacturer: null,
   lens: null,
   cart: loadCart(),
-
-  // Auto-open control for toric/multifocal dialogs (per visit)
   powersAutoOpened: false,
-  powersAutoOpenKey: "",
+  powersAutoOpenKey: ""
 };
 
-// Simple view history for Back button
 const historyStack = [];
 
 function goTo(view, { manufacturer = state.manufacturer, lens = state.lens } = {}) {
-  historyStack.push({
-    view: state.view,
-    manufacturer: state.manufacturer,
-    lens: state.lens
-  });
+  historyStack.push({ view: state.view, manufacturer: state.manufacturer, lens: state.lens });
 
   state.view = view;
   state.manufacturer = manufacturer;
   state.lens = lens;
 
-  // Reset auto-open each time we ENTER the powers screen
   if (view === "powers" && manufacturer && lens) {
     state.powersAutoOpened = false;
     state.powersAutoOpenKey = `${manufacturer.manufacturer}|||${lens.name}|||${lens.type}`;
   }
-
   render();
 }
-
 function goBack() {
   const prev = historyStack.pop();
   if (!prev) return;
@@ -195,7 +205,6 @@ function goBack() {
   state.lens = prev.lens;
   render();
 }
-
 function goHome() {
   historyStack.length = 0;
   state.view = "manufacturers";
@@ -204,85 +213,15 @@ function goHome() {
   render();
 }
 
-// Hook up header buttons (if present)
-const backBtn = document.getElementById("backBtn");
-if (backBtn) backBtn.onclick = goBack;
-
-const homeBtn = document.getElementById("homeBtn");
-if (homeBtn) homeBtn.onclick = goHome;
-
-
 /**********************
- * 3) HELPERS
+ * 4) CART HELPERS
  **********************/
-function makeSpherePowers(maxPlus, maxMinus, step) {
-  // returns list of strings like "+2.00", "-1.25"
-  const arr = [];
-  // plus down to 0
-  for (let v = maxPlus; v >= 0; v = round2(v - step)) arr.push(fmtPower(v));
-  // minus starting at -step to maxMinus
-  for (let v = -step; v >= maxMinus; v = round2(v - step)) arr.push(fmtPower(v));
-  return arr;
-}
-
-function makeAxisList(step) {
-  const out = [];
-  for (let a = step; a <= 180; a += step) out.push(String(a).padStart(3, "0"));
-  return out;
-}
-
-function round2(n) { return Math.round(n * 100) / 100; }
-
-function fmtPower(n) {
-  const sign = n > 0 ? "+" : "";
-  return `${sign}${n.toFixed(2)}`;
-}
-
-function feedback() {
-  // Haptic
-  try {
-    if (navigator.vibrate) navigator.vibrate(15);
-  } catch {}
-
-  // Soft click sound
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-
-    o.type = "square";
-    o.frequency.value = 650; // click-ish
-    g.gain.value = 0.03;     // quiet
-
-    o.connect(g);
-    g.connect(ctx.destination);
-
-    o.start();
-    // very short blip
-    setTimeout(() => {
-      o.stop();
-      ctx.close();
-    }, 18);
-  } catch {}
-}
-
 function saveCart() {
   localStorage.setItem("cl_cart", JSON.stringify(state.cart));
   updateCartCount();
 }
-
-function loadCart() {
-  try { return JSON.parse(localStorage.getItem("cl_cart")) ?? []; }
-  catch { return []; }
-}
-
 function cartKey(item) {
-  // unique by lens + all params
   return [
-    item.manufacturer,
     item.lens,
     item.type,
     item.sphere ?? "",
@@ -291,29 +230,41 @@ function cartKey(item) {
     item.add ?? ""
   ].join("|");
 }
-
+function feedback() {
+  try { if (navigator.vibrate) navigator.vibrate(15); } catch {}
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "square";
+    o.frequency.value = 650;
+    g.gain.value = 0.03;
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    setTimeout(() => { o.stop(); ctx.close(); }, 18);
+  } catch {}
+}
 function addToCart(newItem) {
   const key = cartKey(newItem);
   const existing = state.cart.find(x => cartKey(x) === key);
-  if (existing) existing.qty += 1;
+  if (existing) existing.qty = (existing.qty || 1) + 1;
   else state.cart.push({ ...newItem, qty: 1 });
   saveCart();
   feedback();
 }
-
 function removeFromCart(index) {
   state.cart.splice(index, 1);
   saveCart();
 }
-
 function updateCartCount() {
-  const count = state.cart.reduce((sum, i) => sum + (i.qty || 0), 0);
-  const el = document.getElementById("cartCount");
+  const count = state.cart.reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
+  const el = $("cartCount");
   if (el) el.textContent = String(count);
 }
-
 function breadcrumb(parts) {
-  // parts: [{label, onClick}]
   const el = document.createElement("div");
   el.className = "breadcrumb";
   parts.forEach((p, idx) => {
@@ -332,15 +283,29 @@ function breadcrumb(parts) {
   return el;
 }
 
-
 /**********************
- * 4) RENDER
+ * 5) UI ROOT + HEADER BUTTONS
  **********************/
-const app = document.getElementById("app");
-const goCartBtn = document.getElementById("goCartBtn");
+const app = $("app");
+
+const backBtn = $("backBtn");
+if (backBtn) backBtn.onclick = goBack;
+
+const homeBtn = $("homeBtn");
+if (homeBtn) homeBtn.onclick = goHome;
+
+const goCartBtn = $("goCartBtn");
 if (goCartBtn) goCartBtn.onclick = () => goTo("cart");
 
+/**********************
+ * 6) RENDER
+ **********************/
 function render() {
+  if (!app) {
+    console.error('Missing #app element. Check index.html for <div id="app"></div>');
+    return;
+  }
+
   app.innerHTML = "";
   updateCartCount();
 
@@ -361,7 +326,7 @@ function renderManufacturers() {
   CATALOG.forEach(m => {
     const btn = document.createElement("button");
     btn.className = "btn";
-    btn.innerHTML = `<strong>${m.manufacturer}</strong><span class="pill">${m.lenses.length} lenses</span>`;
+    btn.innerHTML = `<strong>${escapeHtml(m.manufacturer)}</strong><span class="pill">${m.lenses.length} lenses</span>`;
     btn.onclick = () => goTo("lenses", { manufacturer: m, lens: null });
     grid.appendChild(btn);
   });
@@ -389,96 +354,13 @@ function renderLenses() {
     const btn = document.createElement("button");
     btn.className = "btn";
     const typeLabel = l.type === "sphere" ? "Sphere" : l.type === "toric" ? "Toric" : "Multifocal";
-    btn.innerHTML = `<strong>${l.name}</strong><span class="pill">${typeLabel}</span>`;
+    btn.innerHTML = `<strong>${escapeHtml(l.name)}</strong><span class="pill">${typeLabel}</span>`;
     btn.onclick = () => goTo("powers", { manufacturer: state.manufacturer, lens: l });
     grid.appendChild(btn);
   });
 
   wrap.appendChild(grid);
   app.appendChild(wrap);
-}
-
-function renderPowers() {
-  const m = state.manufacturer.manufacturer;
-  const l = state.lens;
-
-  // Breadcrumb
-  app.appendChild(
-    breadcrumb([
-      { label: "Manufacturers", onClick: () => goHome() },
-      { label: m, onClick: () => goTo("lenses", { manufacturer: state.manufacturer, lens: null }) },
-      { label: l.name }
-    ])
-  );
-
-  const wrap = document.createElement("div");
-  wrap.className = "card";
-
-  const title = document.createElement("div");
-  title.className = "row";
-
-  const h2 = document.createElement("h2");
-  h2.style.margin = "0";
-  h2.textContent = l.name;
-  title.appendChild(h2);
-
-  const typeLabel = l.type === "sphere" ? "Sphere" : l.type === "toric" ? "Toric" : "Multifocal";
-  const pill = document.createElement("span");
-  pill.className = "pill";
-  pill.textContent = typeLabel;
-  title.appendChild(pill);
-
-  wrap.appendChild(title);
-
-  const hint = document.createElement("p");
-  hint.className = "muted";
-  hint.textContent = l.type === "sphere"
-    ? "Tap a sphere power to add to the order."
-    : l.type === "toric"
-      ? "Toric flow: Cylinder → Sphere → Axis."
-      : "Multifocal flow: Sphere → Add.";
-  wrap.appendChild(hint);
-
-  // Manual reopen buttons (always available)
-  if (l.type === "toric") {
-    const startBtn = document.createElement("button");
-    startBtn.className = "small primary";
-    startBtn.textContent = "Select Toric Parameters";
-    startBtn.onclick = () => runToricWizard(m, l);
-    wrap.appendChild(startBtn);
-  }
-
-  if (l.type === "multifocal") {
-    const startBtn = document.createElement("button");
-    startBtn.className = "small primary";
-    startBtn.textContent = "Select Multifocal Parameters";
-    startBtn.onclick = () => runMultifocalWizard(m, l);
-    wrap.appendChild(startBtn);
-  }
-
-  // Spherical picker grid
-  if (l.type === "sphere") {
-    wrap.appendChild(powerGrid(l.powers, (sph) => {
-      addToCart({ manufacturer: m, lens: l.name, type: l.type, sphere: sph });
-      toast(`Added ${l.name} ${sph}`);
-    }));
-  }
-
-  app.appendChild(wrap);
-
-  // Auto-open parameter picker once per entry into this Powers screen
-  const key = `${state.manufacturer.manufacturer}|||${l.name}|||${l.type}`;
-  if ((l.type === "toric" || l.type === "multifocal") &&
-      !state.powersAutoOpened &&
-      state.powersAutoOpenKey === key) {
-
-    state.powersAutoOpened = true;
-
-    setTimeout(() => {
-      if (l.type === "toric") runToricWizard(m, l);
-      if (l.type === "multifocal") runMultifocalWizard(m, l);
-    }, 0);
-  }
 }
 
 function powerGrid(options, onPick) {
@@ -494,17 +376,104 @@ function powerGrid(options, onPick) {
   return grid;
 }
 
+function renderPowers() {
+  const mName = state.manufacturer.manufacturer;
+  const lens = state.lens;
+
+  app.appendChild(
+    breadcrumb([
+      { label: "Manufacturers", onClick: () => goHome() },
+      { label: mName, onClick: () => goTo("lenses", { manufacturer: state.manufacturer, lens: null }) },
+      { label: lens.name }
+    ])
+  );
+
+  const wrap = document.createElement("div");
+  wrap.className = "card";
+
+  const title = document.createElement("div");
+  title.className = "row";
+
+  const h2 = document.createElement("h2");
+  h2.style.margin = "0";
+  h2.textContent = lens.name;
+  title.appendChild(h2);
+
+  const typeLabel = lens.type === "sphere" ? "Sphere" : lens.type === "toric" ? "Toric" : "Multifocal";
+  const pill = document.createElement("span");
+  pill.className = "pill";
+  pill.textContent = typeLabel;
+  title.appendChild(pill);
+
+  wrap.appendChild(title);
+
+  const hint = document.createElement("p");
+  hint.className = "muted";
+  hint.textContent = lens.type === "sphere"
+    ? "Tap a sphere power to add to the order."
+    : lens.type === "toric"
+      ? "Toric flow: Cylinder → Sphere → Axis."
+      : "Multifocal flow: Sphere → Add.";
+  wrap.appendChild(hint);
+
+  if (lens.type === "toric") {
+    const startBtn = document.createElement("button");
+    startBtn.className = "small primary";
+    startBtn.textContent = "Select Toric Parameters";
+    startBtn.onclick = () => runToricWizard(mName, lens);
+    wrap.appendChild(startBtn);
+  }
+
+  if (lens.type === "multifocal") {
+    const startBtn = document.createElement("button");
+    startBtn.className = "small primary";
+    startBtn.textContent = "Select Multifocal Parameters";
+    startBtn.onclick = () => runMultifocalWizard(mName, lens);
+    wrap.appendChild(startBtn);
+  }
+
+  if (lens.type === "sphere") {
+    wrap.appendChild(powerGrid(lens.powers, (sph) => {
+      addToCart({ manufacturer: mName, lens: lens.name, type: lens.type, sphere: sph });
+      toast(`Added ${lens.name} ${sph}`);
+    }));
+  }
+
+  app.appendChild(wrap);
+
+  // Auto-open once each time we enter this lens powers screen
+  const key = `${state.manufacturer.manufacturer}|||${lens.name}|||${lens.type}`;
+  if ((lens.type === "toric" || lens.type === "multifocal") &&
+      !state.powersAutoOpened &&
+      state.powersAutoOpenKey === key) {
+    state.powersAutoOpened = true;
+    setTimeout(() => {
+      if (lens.type === "toric") runToricWizard(mName, lens);
+      if (lens.type === "multifocal") runMultifocalWizard(mName, lens);
+    }, 0);
+  }
+}
 
 /**********************
- * 5) PARAMETER WIZARDS
+ * 7) PARAMETER WIZARDS
  **********************/
-const dialog = document.getElementById("paramDialog");
-const paramBody = document.getElementById("paramBody");
-const paramTitle = document.getElementById("paramTitle");
-const paramHint = document.getElementById("paramHint");
-const paramNextBtn = document.getElementById("paramNextBtn");
+const dialog = $("paramDialog");
+const paramBody = $("paramBody");
+const paramTitle = $("paramTitle");
+const paramHint = $("paramHint");
+const paramNextBtn = $("paramNextBtn"); // not used (hidden), but we keep reference safe
+
+function ensureDialog() {
+  if (!dialog || !paramBody || !paramTitle || !paramHint) {
+    alert("Parameter dialog elements are missing from index.html.");
+    return false;
+  }
+  return true;
+}
 
 function runToricWizard(manufacturerName, lens) {
+  if (!ensureDialog()) return;
+
   const picked = { cylinder: null, sphere: null, axis: null };
   let step = 0;
 
@@ -547,7 +516,6 @@ function runToricWizard(manufacturerName, lens) {
           cylinder: picked.cylinder,
           axis: picked.axis
         });
-
         toast(`Added ${lens.name} ${picked.sphere} ${picked.cylinder} x ${picked.axis}`);
       };
 
@@ -564,12 +532,8 @@ function runToricWizard(manufacturerName, lens) {
     back.className = "small";
     back.textContent = "← Back";
     back.onclick = () => {
-      if (step > 0) {
-        step--;
-        renderStep();
-      } else {
-        dialog.close();
-      }
+      if (step > 0) { step--; renderStep(); }
+      else dialog.close();
     };
 
     const done = document.createElement("button");
@@ -594,6 +558,8 @@ function runToricWizard(manufacturerName, lens) {
 }
 
 function runMultifocalWizard(manufacturerName, lens) {
+  if (!ensureDialog()) return;
+
   const picked = { sphere: null, add: null };
   let step = 0;
 
@@ -634,7 +600,6 @@ function runMultifocalWizard(manufacturerName, lens) {
           sphere: picked.sphere,
           add: picked.add
         });
-
         toast(`Added ${lens.name} ${picked.sphere} ${picked.add}`);
       };
 
@@ -651,12 +616,8 @@ function runMultifocalWizard(manufacturerName, lens) {
     back.className = "small";
     back.textContent = "← Back";
     back.onclick = () => {
-      if (step > 0) {
-        step--;
-        renderStep();
-      } else {
-        dialog.close();
-      }
+      if (step > 0) { step--; renderStep(); }
+      else dialog.close();
     };
 
     const done = document.createElement("button");
@@ -680,10 +641,37 @@ function runMultifocalWizard(manufacturerName, lens) {
   }, { once: true });
 }
 
-
 /**********************
- * 6) CART + EXPORT
+ * 8) CART + EXPORT
  **********************/
+function formatParams(item) {
+  if (item.type === "sphere") return `Sphere ${item.sphere}`;
+  if (item.type === "toric") return `Sph ${item.sphere} / Cyl ${item.cylinder} × ${item.axis}`;
+  if (item.type === "multifocal") return `Sphere ${item.sphere} Add ${item.add}`;
+  return "";
+}
+function formatPrintLine(item) {
+  if (item.type === "sphere") return `${item.lens} ${item.sphere}`;
+  if (item.type === "toric") return `${item.lens} ${item.sphere} ${item.cylinder} x ${item.axis}`;
+  if (item.type === "multifocal") return `${item.lens} ${item.sphere} ${item.add}`;
+  return `${item.lens}`;
+}
+function getSortedCartForExport() {
+  return [...state.cart].sort((a, b) => {
+    const m = (a.manufacturer || "").localeCompare(b.manufacturer || "", undefined, { sensitivity: "base" });
+    if (m !== 0) return m;
+    const l = (a.lens || "").localeCompare(b.lens || "", undefined, { sensitivity: "base" });
+    if (l !== 0) return l;
+    const s = (a.sphere || "").localeCompare(b.sphere || "");
+    if (s !== 0) return s;
+    const c = (a.cylinder || "").localeCompare(b.cylinder || "");
+    if (c !== 0) return c;
+    const ax = (a.axis || "").localeCompare(b.axis || "");
+    if (ax !== 0) return ax;
+    return (a.add || "").localeCompare(b.add || "");
+  });
+}
+
 function renderCart() {
   app.appendChild(
     breadcrumb([
@@ -703,11 +691,12 @@ function renderCart() {
   h2.textContent = "Order";
   top.appendChild(h2);
 
-  const exportBtn = document.createElement("button");
-  exportBtn.className = "small primary";
-  exportBtn.textContent = "Print / Download PDF";
-  exportBtn.onclick = () => exportPrintView({ autoPrint: true });
-  top.appendChild(exportBtn);
+  // PRINT button (auto print + prompt after print)
+  const printBtn = document.createElement("button");
+  printBtn.className = "small primary";
+  printBtn.textContent = "Print";
+  printBtn.onclick = () => exportPrintView({ autoPrint: true, promptClear: true });
+  top.appendChild(printBtn);
 
   const clearBtn = document.createElement("button");
   clearBtn.className = "small danger";
@@ -732,30 +721,29 @@ function renderCart() {
 
   const table = document.createElement("table");
   table.innerHTML = `
-  <thead>
-    <tr>
-      <th>Lens</th>
-      <th>Parameters</th>
-      <th class="qty">Qty</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-`;
+    <thead>
+      <tr>
+        <th>Lens</th>
+        <th>Parameters</th>
+        <th class="qty">Qty</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
 
   const tbody = table.querySelector("tbody");
 
   state.cart.forEach((item, idx) => {
     const tr = document.createElement("tr");
-
     const params = formatParams(item);
 
     tr.innerHTML = `
-  <td>${escapeHtml(item.lens)}</td>
-  <td>${escapeHtml(params)}</td>
-  <td></td>
-  <td></td>
-`;
+      <td>${escapeHtml(item.lens)}</td>
+      <td>${escapeHtml(params)}</td>
+      <td></td>
+      <td></td>
+    `;
 
     const qtyTd = tr.children[2];
     const qtyInput = document.createElement("input");
@@ -783,42 +771,6 @@ function renderCart() {
   app.appendChild(wrap);
 }
 
-function formatParams(item) {
-  if (item.type === "sphere") return `Sphere ${item.sphere}`;
-  if (item.type === "toric") return `Sph ${item.sphere} / Cyl ${item.cylinder} × ${item.axis}`;
-  if (item.type === "multifocal") return `Sphere ${item.sphere} Add ${item.add}`;
-  return "";
-}
-
-function formatPrintLine(item) {
-  // No manufacturer, no "Sphere/Cyl" labels
-  if (item.type === "sphere") return `${item.lens} ${item.sphere}`;
-  if (item.type === "toric") return `${item.lens} ${item.sphere} ${item.cylinder} x ${item.axis}`;
-  if (item.type === "multifocal") return `${item.lens} ${item.sphere} ${item.add}`;
-  return `${item.lens}`;
-}
-
-function getSortedCartForExport() {
-  return [...state.cart].sort((a, b) => {
-    const m = (a.manufacturer || "").localeCompare(b.manufacturer || "", undefined, { sensitivity: "base" });
-    if (m !== 0) return m;
-
-    const l = (a.lens || "").localeCompare(b.lens || "", undefined, { sensitivity: "base" });
-    if (l !== 0) return l;
-
-    const s = (a.sphere || "").localeCompare(b.sphere || "");
-    if (s !== 0) return s;
-
-    const c = (a.cylinder || "").localeCompare(b.cylinder || "");
-    if (c !== 0) return c;
-
-    const ax = (a.axis || "").localeCompare(b.axis || "");
-    if (ax !== 0) return ax;
-
-    return (a.add || "").localeCompare(b.add || "");
-  });
-}
-
 function exportPrintView(opts = {}) {
   const now = new Date();
   const dateStr = now.toLocaleString();
@@ -830,13 +782,12 @@ function exportPrintView(opts = {}) {
 
   const itemsHtml = lines.map(x => `
     <div class="item">
-      <span class="itemText">${escapeHtml(x.label)}    (Qty: ${x.qty})</span>
+      <span class="itemText">${escapeHtml(x.label)} (Qty: ${x.qty})</span>
       <span class="checkBox"></span>
     </div>
   `).join("");
 
-  const html = `
-<!doctype html>
+  const html = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -846,36 +797,12 @@ function exportPrintView(opts = {}) {
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     body { margin: 12px; }
 
-    .top {
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap: 12px;
-}
+    .top { display:flex; justify-content:space-between; align-items:flex-start; gap: 12px; }
 
-/* LEFT HEADER: logo + title */
-.leftHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo {
-  height: 32px;      /* adjust to 28px if you want tighter */
-  width: auto;
-}
-
-.titleBlock h1 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.titleBlock .subtle {
-  color:#475569;
-  font-size: 9px;
-  margin-top: 2px;
-}
+    .leftHeader { display:flex; align-items:center; gap:10px; }
+    .logo { height: 32px; width:auto; }
+    .titleBlock h1 { margin: 0; font-size: 14px; font-weight: 700; }
+    .titleBlock .subtle { color:#475569; font-size: 9px; margin-top: 2px; }
 
     .metaRight { font-size: 10px; color:#111; text-align:right; line-height: 1.2; }
     .metaRight .label { color:#334155; }
@@ -895,56 +822,46 @@ function exportPrintView(opts = {}) {
       body { margin: 8mm; }
     }
 
-    .items {
-      column-count: 2;
-      column-gap: 14px;
-      margin-top: 8px;
-    }
-
+    .items { column-count: 2; column-gap: 14px; margin-top: 8px; }
     .item {
       break-inside: avoid;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap: 8px;
-
       border-bottom: 1px solid #e2e8f0;
       padding: 6px 0;
-
       font-size: 12px;
       line-height: 1.1;
     }
-
-    .itemText{
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .checkBox{
-      width: 12px;
-      height: 12px;
-      border: 1.25px solid #64748b;
-      border-radius: 3px;
-      flex: 0 0 auto;
-    }
+    .itemText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .checkBox { width: 12px; height: 12px; border: 1.25px solid #64748b; border-radius: 3px; flex: 0 0 auto; }
   </style>
 </head>
 <body>
   <div class="top">
-  <div class="leftHeader">
-    <img src="logo.png" class="logo" alt="Hill Eyecare logo" />
-    <div class="titleBlock">
-      <h1>Trial Lens Order</h1>
-      <div class="subtle">Generated: ${escapeHtml(dateStr)}</div>
+    <div class="leftHeader">
+      <img src="logo.png" class="logo" alt="Hill Eyecare logo" />
+      <div class="titleBlock">
+        <h1>Trial Lens Order</h1>
+        <div class="subtle">Generated: ${escapeHtml(dateStr)}</div>
+      </div>
+    </div>
+    <div class="metaRight">
+      <div><span class="label">Ordered by:</span> __________________</div>
+      <div style="margin-top:6px;"><span class="label">Date ordered:</span> __________________</div>
     </div>
   </div>
 
-  <div class="metaRight">
-    <div><span class="label">Ordered by:</span> __________________</div>
-    <div style="margin-top:6px;"><span class="label">Date ordered:</span> __________________</div>
+  <div class="actions">
+    <button onclick="window.print()">Print</button>
+    <button onclick="window.close()">Close</button>
   </div>
-</div>
+
+  <div class="items">
+    ${itemsHtml || '<div class="item"><span class="itemText">No items</span><span class="checkBox"></span></div>'}
+  </div>
+</body>
 </html>`;
 
   const w = window.open("", "_blank");
@@ -952,109 +869,94 @@ function exportPrintView(opts = {}) {
   w.document.write(html);
   w.document.close();
 
-// Auto-open print dialog and show Clear / Keep / Cancel prompt after printing
-if (opts.autoPrint) {
-  w.onload = () => {
-    try { w.focus(); } catch {}
-    try { w.print(); } catch {}
-  };
+  if (opts.autoPrint) {
+    w.onload = () => {
+      try { w.focus(); } catch {}
+      try { w.print(); } catch {}
+    };
 
-  w.onafterprint = () => {
-    if (!opts.promptClear) {
-      try { w.close(); } catch {}
-      return;
-    }
-
-    // Inject 3-choice prompt into export window
-    const d = w.document;
-
-    const overlay = d.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.45)";
-    overlay.style.display = "grid";
-    overlay.style.placeItems = "center";
-    overlay.style.zIndex = "9999";
-
-    const box = d.createElement("div");
-    box.style.background = "white";
-    box.style.borderRadius = "14px";
-    box.style.padding = "20px";
-    box.style.width = "260px";
-    box.style.textAlign = "center";
-    box.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-
-    const totalQty = (() => {
-      try {
-        return (state.cart || []).reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
-      } catch {
-        return 0;
+    w.onafterprint = () => {
+      if (!opts.promptClear) {
+        try { w.close(); } catch {}
+        return;
       }
-})();
 
-const msg = d.createElement("div");
-msg.textContent = `Clear ${totalQty} lens${totalQty === 1 ? "" : "es"} after printing/saving?`;
+      // 3-choice prompt with item count
+      const d = w.document;
 
-    msg.style.fontSize = "14px";
-    msg.style.marginBottom = "16px";
+      const totalQty = (() => {
+        try { return (state.cart || []).reduce((sum, i) => sum + (Number(i.qty) || 0), 0); }
+        catch { return 0; }
+      })();
 
-    const btnRow = d.createElement("div");
-    btnRow.style.display = "grid";
-    btnRow.style.gap = "8px";
+      const overlay = d.createElement("div");
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.background = "rgba(0,0,0,0.45)";
+      overlay.style.display = "grid";
+      overlay.style.placeItems = "center";
+      overlay.style.zIndex = "9999";
 
-    function makeBtn(label, bg, handler) {
-      const b = d.createElement("button");
-      b.textContent = label;
-      b.style.padding = "10px";
-      b.style.borderRadius = "10px";
-      b.style.border = "1px solid #cbd5e1";
-      b.style.background = bg;
-      b.style.cursor = "pointer";
-      b.style.fontSize = "13px";
-      b.onclick = handler;
-      return b;
-    }
+      const box = d.createElement("div");
+      box.style.background = "white";
+      box.style.borderRadius = "14px";
+      box.style.padding = "18px";
+      box.style.width = "280px";
+      box.style.textAlign = "center";
+      box.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
 
-    // CLEAR
-    btnRow.appendChild(
-      makeBtn("Clear", "#fee2e2", () => {
-        try {
-          window.opener.state.cart = [];
-          window.opener.saveCart();
-          window.opener.render();
-        } catch {}
+      const msg = d.createElement("div");
+      msg.textContent = `Clear ${totalQty} lens${totalQty === 1 ? "" : "es"} now?`;
+      msg.style.fontSize = "14px";
+      msg.style.marginBottom = "14px";
+
+      const btnRow = d.createElement("div");
+      btnRow.style.display = "grid";
+      btnRow.style.gap = "8px";
+
+      function makeBtn(label, bg, handler) {
+        const b = d.createElement("button");
+        b.textContent = label;
+        b.style.padding = "10px";
+        b.style.borderRadius = "10px";
+        b.style.border = "1px solid #cbd5e1";
+        b.style.background = bg;
+        b.style.cursor = "pointer";
+        b.style.fontSize = "13px";
+        b.onclick = handler;
+        return b;
+      }
+
+      btnRow.appendChild(makeBtn("Clear", "#fee2e2", () => {
+        state.cart = [];
+        saveCart();
+        render();
         try { w.close(); } catch {}
-      })
-    );
+      }));
 
-    // KEEP
-    btnRow.appendChild(
-      makeBtn("Keep", "#e0f2fe", () => {
+      btnRow.appendChild(makeBtn("Keep", "#e0f2fe", () => {
         try { w.close(); } catch {}
-      })
-    );
+      }));
 
-    // CANCEL (do NOT close)
-    btnRow.appendChild(
-      makeBtn("Cancel", "#f8fafc", () => {
+      btnRow.appendChild(makeBtn("Cancel", "#f8fafc", () => {
         overlay.remove();
-      })
-    );
+      }));
 
-    box.appendChild(msg);
-    box.appendChild(btnRow);
-    overlay.appendChild(box);
-    d.body.appendChild(overlay);
-  };
+      box.appendChild(msg);
+      box.appendChild(btnRow);
+      overlay.appendChild(box);
+      d.body.appendChild(overlay);
+    };
+  }
 }
 
 /**********************
- * 7) TINY TOAST
+ * 9) TOAST
  **********************/
 let toastTimer = null;
 function toast(msg) {
   clearTimeout(toastTimer);
-  let t = document.getElementById("toast");
+  let t = $("toast");
   if (!t) {
     t = document.createElement("div");
     t.id = "toast";
@@ -1075,18 +977,7 @@ function toast(msg) {
   toastTimer = setTimeout(() => { t.style.display = "none"; }, 1400);
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  }[c]));
-}
-
-
 /**********************
- * 8) START
+ * 10) START
  **********************/
 render();
