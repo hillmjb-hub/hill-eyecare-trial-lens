@@ -695,7 +695,7 @@ function renderCart() {
   const printBtn = document.createElement("button");
   printBtn.className = "small primary";
   printBtn.textContent = "Print / Save PDF";
-  printBtn.onclick = () => exportPrintView({ autoPrint: true, promptClear: true });
+  printBtn.onclick = () => exportPrintView({ autoPrint: true, promptClear: false });
   top.appendChild(printBtn);
 
   const clearBtn = document.createElement("button");
