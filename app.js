@@ -845,9 +845,36 @@ function exportPrintView(opts = {}) {
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     body { margin: 12px; }
 
-    .top { display:flex; justify-content:space-between; align-items:flex-start; gap: 12px; }
-    h1 { margin: 0; font-size: 14px; font-weight: 700; }
-    .subtle { color:#475569; font-size: 9px; margin-top: 2px; }
+    .top {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap: 12px;
+}
+
+/* LEFT HEADER: logo + title */
+.leftHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  height: 32px;      /* adjust to 28px if you want tighter */
+  width: auto;
+}
+
+.titleBlock h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.titleBlock .subtle {
+  color:#475569;
+  font-size: 9px;
+  margin-top: 2px;
+}
 
     .metaRight { font-size: 10px; color:#111; text-align:right; line-height: 1.2; }
     .metaRight .label { color:#334155; }
@@ -881,9 +908,9 @@ function exportPrintView(opts = {}) {
       gap: 8px;
 
       border-bottom: 1px solid #e2e8f0;
-      padding: 5px 0;
+      padding: 6px 0;
 
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.1;
     }
 
@@ -904,25 +931,19 @@ function exportPrintView(opts = {}) {
 </head>
 <body>
   <div class="top">
-    <div>
+  <div class="leftHeader">
+    <img src="logo.png" class="logo" alt="Hill Eyecare logo" />
+    <div class="titleBlock">
       <h1>Trial Lens Order</h1>
       <div class="subtle">Generated: ${escapeHtml(dateStr)}</div>
     </div>
-    <div class="metaRight">
-      <div><span class="label">Ordered by:</span> __________________</div>
-      <div style="margin-top:6px;"><span class="label">Date ordered:</span> __________________</div>
-    </div>
   </div>
 
-  <div class="actions">
-    <button onclick="window.print()">Print</button>
-    <button onclick="window.close()">Close</button>
+  <div class="metaRight">
+    <div><span class="label">Ordered by:</span> __________________</div>
+    <div style="margin-top:6px;"><span class="label">Date ordered:</span> __________________</div>
   </div>
-
-  <div class="items">
-    ${itemsHtml || '<div class="item"><span class="itemText">No items</span><span class="checkBox"></span></div>'}
-  </div>
-</body>
+</div>
 </html>`;
 
   const w = window.open("", "_blank");
@@ -930,17 +951,101 @@ function exportPrintView(opts = {}) {
   w.document.write(html);
   w.document.close();
 
-// Auto-open print dialog (used by Order page Print / Download PDF buttons)
+// Auto-open print dialog and show Clear / Keep / Cancel prompt after printing
 if (opts.autoPrint) {
-  // Wait for content to render before printing
   w.onload = () => {
     try { w.focus(); } catch {}
     try { w.print(); } catch {}
   };
-}
 
-}
+  w.onafterprint = () => {
+    if (!opts.promptClear) {
+      try { w.close(); } catch {}
+      return;
+    }
 
+    // Inject 3-choice prompt into export window
+    const d = w.document;
+
+    const overlay = d.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.background = "rgba(0,0,0,0.45)";
+    overlay.style.display = "grid";
+    overlay.style.placeItems = "center";
+    overlay.style.zIndex = "9999";
+
+    const box = d.createElement("div");
+    box.style.background = "white";
+    box.style.borderRadius = "14px";
+    box.style.padding = "20px";
+    box.style.width = "260px";
+    box.style.textAlign = "center";
+    box.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+
+    const totalQty = (() => {
+      try {
+        return (state.cart || []).reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
+      } catch {
+        return 0;
+      }
+})();
+
+const msg = d.createElement("div");
+msg.textContent = `Clear ${totalQty} lens${totalQty === 1 ? "" : "es"} after printing/saving?`;
+
+    msg.style.fontSize = "14px";
+    msg.style.marginBottom = "16px";
+
+    const btnRow = d.createElement("div");
+    btnRow.style.display = "grid";
+    btnRow.style.gap = "8px";
+
+    function makeBtn(label, bg, handler) {
+      const b = d.createElement("button");
+      b.textContent = label;
+      b.style.padding = "10px";
+      b.style.borderRadius = "10px";
+      b.style.border = "1px solid #cbd5e1";
+      b.style.background = bg;
+      b.style.cursor = "pointer";
+      b.style.fontSize = "13px";
+      b.onclick = handler;
+      return b;
+    }
+
+    // CLEAR
+    btnRow.appendChild(
+      makeBtn("Clear", "#fee2e2", () => {
+        try {
+          window.opener.state.cart = [];
+          window.opener.saveCart();
+          window.opener.render();
+        } catch {}
+        try { w.close(); } catch {}
+      })
+    );
+
+    // KEEP
+    btnRow.appendChild(
+      makeBtn("Keep", "#e0f2fe", () => {
+        try { w.close(); } catch {}
+      })
+    );
+
+    // CANCEL (do NOT close)
+    btnRow.appendChild(
+      makeBtn("Cancel", "#f8fafc", () => {
+        overlay.remove();
+      })
+    );
+
+    box.appendChild(msg);
+    box.appendChild(btnRow);
+    overlay.appendChild(box);
+    d.body.appendChild(overlay);
+  };
+}
 
 /**********************
  * 7) TINY TOAST
