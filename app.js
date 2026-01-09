@@ -346,12 +346,20 @@ function renderPowers() {
   const l = state.lens;
 
 // Auto-open parameter picker for toric/multifocal lenses when entering this screen
-if ((l.type === "toric" || l.type === "multifocal") && !l.__autoOpened) {
-  l.__autoOpened = true; // session-only flag to avoid reopening on every render
-  setTimeout(() => {
-    if (l.type === "toric") runToricWizard(m, l);
-    if (l.type === "multifocal") runMultifocalWizard(m, l);
-  }, 0);
+if (l.type === "toric") {
+  const startBtn = document.createElement("button");
+  startBtn.className = "small primary";
+  startBtn.textContent = "Select Toric Parameters";
+  startBtn.onclick = () => runToricWizard(m, l);
+  wrap.appendChild(startBtn);
+}
+
+if (l.type === "multifocal") {
+  const startBtn = document.createElement("button");
+  startBtn.className = "small primary";
+  startBtn.textContent = "Select Multifocal Parameters";
+  startBtn.onclick = () => runMultifocalWizard(m, l);
+  wrap.appendChild(startBtn);
 }
 
   app.appendChild(
@@ -855,40 +863,65 @@ function exportPrintView() {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    body { margin: 18px; }
-    h1 { margin: 0; font-size: 18px; }
-    .subtle { color: #475569; font-size: 11px; margin-top: 2px; }
-    .actions { margin: 12px 0; display: flex; gap: 10px; }
-    button {
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid #cbd5e1;
-      background: white;
-      cursor: pointer;
-      font-size: 12px;
-    }
+body { margin: 12px; }
 
-    @media print {
-      .actions { display: none !important; }
-      body { margin: 10mm; }
-    }
+.top { display:flex; justify-content:space-between; align-items:flex-start; gap: 12px; }
+h1 { margin: 0; font-size: 14px; font-weight: 700; }
+.subtle { color:#475569; font-size: 9px; margin-top: 2px; }
 
-    .items {
-      column-count: 2;
-      column-gap: 18px;
-      margin-top: 12px;
-    }
+.metaRight { font-size: 10px; color:#111; text-align:right; line-height: 1.2; }
+.metaRight .label { color:#334155; }
 
-    .item {
-      break-inside: avoid;
-      border-bottom: 1px solid #e2e8f0;
-      padding: 6px 0;
-      font-size: 12px;
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+.actions { margin: 8px 0 10px; display:flex; gap: 8px; }
+button {
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  cursor:pointer;
+  font-size: 11px;
+}
+
+@media print {
+  .actions { display:none !important; }
+  body { margin: 8mm; }
+}
+
+/* Compact 2-column list */
+.items {
+  column-count: 2;
+  column-gap: 14px;
+  margin-top: 8px;
+}
+
+.item {
+  break-inside: avoid;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 8px;
+
+  border-bottom: 1px solid #e2e8f0;
+  padding: 4px 0;
+
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.itemText{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkBox{
+  width: 12px;
+  height: 12px;
+  border: 1.25px solid #64748b;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
   </style>
 </head>
 <body>
