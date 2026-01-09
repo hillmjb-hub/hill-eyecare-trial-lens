@@ -694,7 +694,7 @@ function renderCart() {
   // PRINT button (auto print + prompt after print)
   const printBtn = document.createElement("button");
   printBtn.className = "small primary";
-  printBtn.textContent = "Print";
+  printBtn.textContent = "Print / Save PDF";
   printBtn.onclick = () => exportPrintView({ autoPrint: true, promptClear: true });
   top.appendChild(printBtn);
 
