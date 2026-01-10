@@ -31,6 +31,81 @@ function escapeHtml(s) {
     "'":"&#39;"
   }[c]));
 }
+function showClearAfterPrintPrompt() {
+  // Prevent duplicates
+  if (document.getElementById("tlPrintOverlay")) return;
+
+  const totalQty = (state.cart || []).reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
+
+  const overlay = document.createElement("div");
+  overlay.id = "tlPrintOverlay";
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.background = "rgba(0,0,0,0.45)";
+  overlay.style.display = "grid";
+  overlay.style.placeItems = "center";
+  overlay.style.zIndex = "9999";
+
+  const box = document.createElement("div");
+  box.style.background = "white";
+  box.style.borderRadius = "14px";
+  box.style.padding = "20px";
+  box.style.width = "280px";
+  box.style.textAlign = "center";
+  box.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+
+  const msg = document.createElement("div");
+  msg.textContent = `Clear ${totalQty} lens${totalQty === 1 ? "" : "es"}?`;
+  msg.style.fontSize = "15px";
+  msg.style.marginBottom = "14px";
+
+  const btnRow = document.createElement("div");
+  btnRow.style.display = "grid";
+  btnRow.style.gap = "8px";
+
+  function makeBtn(label, bg, handler) {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.style.padding = "10px";
+    b.style.borderRadius = "10px";
+    b.style.border = "1px solid #cbd5e1";
+    b.style.background = bg;
+    b.style.cursor = "pointer";
+    b.style.fontSize = "13px";
+    b.onclick = handler;
+    return b;
+  }
+
+  // CLEAR
+  btnRow.appendChild(
+    makeBtn("Clear", "#fee2e2", () => {
+      state.cart = [];
+      saveCart();
+      render();
+      overlay.remove();
+    })
+  );
+
+  // KEEP
+  btnRow.appendChild(
+    makeBtn("Keep", "#e0f2fe", () => {
+      overlay.remove();
+    })
+  );
+
+  // CANCEL (do NOT close, do nothing)
+  btnRow.appendChild(
+    makeBtn("Cancel", "#f8fafc", () => {
+      // Cancel keeps everything as-is; just remove the prompt
+      overlay.remove();
+    })
+  );
+
+  box.appendChild(msg);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
 
 /**********************
  * 2) CATALOG (EDIT ME)
@@ -695,7 +770,7 @@ function renderCart() {
   const printBtn = document.createElement("button");
   printBtn.className = "small primary";
   printBtn.textContent = "Print / Save PDF";
-  printBtn.onclick = () => exportPrintView({ autoPrint: true, promptClear: false });
+  printBtn.onclick = () => exportPrintView({ autoPrint: true, promptClear: true });
   top.appendChild(printBtn);
 
   const clearBtn = document.createElement("button");
@@ -799,8 +874,8 @@ function exportPrintView(opts = {}) {
 
     .top { display:flex; justify-content:space-between; align-items:flex-start; gap: 12px; }
 
-    .leftHeader { display:flex; align-items:center; gap:10px; }
-    .logo { height: 32px; width:auto; }
+    .leftHeader { display:flex; align-items:center; gap:12px; }
+    .logo { height: 48px; width:auto; }
     .titleBlock h1 { margin: 0; font-size: 14px; font-weight: 700; }
     .titleBlock .subtle { color:#475569; font-size: 9px; margin-top: 2px; }
 
@@ -869,85 +944,35 @@ function exportPrintView(opts = {}) {
   w.document.write(html);
   w.document.close();
 
-  if (opts.autoPrint) {
-    w.onload = () => {
-      try { w.focus(); } catch {}
+  // Auto-open print dialog (tablet-safe) and then ask main window what to do
+if (opts.autoPrint) {
+  w.onload = () => {
+    try { w.focus(); } catch {}
+
+    // Give Android/Chrome time to render before print()
+    setTimeout(() => {
       try { w.print(); } catch {}
-    };
+    }, 250);
+  };
 
-    w.onafterprint = () => {
-      if (!opts.promptClear) {
-        try { w.close(); } catch {}
-        return;
-      }
-
-      // 3-choice prompt with item count
-      const d = w.document;
-
-      const totalQty = (() => {
-        try { return (state.cart || []).reduce((sum, i) => sum + (Number(i.qty) || 0), 0); }
-        catch { return 0; }
-      })();
-
-      const overlay = d.createElement("div");
-      overlay.style.position = "fixed";
-      overlay.style.inset = "0";
-      overlay.style.background = "rgba(0,0,0,0.45)";
-      overlay.style.display = "grid";
-      overlay.style.placeItems = "center";
-      overlay.style.zIndex = "9999";
-
-      const box = d.createElement("div");
-      box.style.background = "white";
-      box.style.borderRadius = "14px";
-      box.style.padding = "18px";
-      box.style.width = "280px";
-      box.style.textAlign = "center";
-      box.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-
-      const msg = d.createElement("div");
-      msg.textContent = `Clear ${totalQty} lens${totalQty === 1 ? "" : "es"} now?`;
-      msg.style.fontSize = "14px";
-      msg.style.marginBottom = "14px";
-
-      const btnRow = d.createElement("div");
-      btnRow.style.display = "grid";
-      btnRow.style.gap = "8px";
-
-      function makeBtn(label, bg, handler) {
-        const b = d.createElement("button");
-        b.textContent = label;
-        b.style.padding = "10px";
-        b.style.borderRadius = "10px";
-        b.style.border = "1px solid #cbd5e1";
-        b.style.background = bg;
-        b.style.cursor = "pointer";
-        b.style.fontSize = "13px";
-        b.onclick = handler;
-        return b;
-      }
-
-      btnRow.appendChild(makeBtn("Clear", "#fee2e2", () => {
-        state.cart = [];
-        saveCart();
-        render();
-        try { w.close(); } catch {}
-      }));
-
-      btnRow.appendChild(makeBtn("Keep", "#e0f2fe", () => {
-        try { w.close(); } catch {}
-      }));
-
-      btnRow.appendChild(makeBtn("Cancel", "#f8fafc", () => {
-        overlay.remove();
-      }));
-
-      box.appendChild(msg);
-      box.appendChild(btnRow);
-      overlay.appendChild(box);
-      d.body.appendChild(overlay);
-    };
-  }
+  // Some Android builds fire afterprint too early — delay + do NOT draw UI in print window
+  w.onafterprint = () => {
+    setTimeout(() => {
+      try {
+        if (opts.promptClear) {
+          // Tell the opener to show Clear/Keep/Cancel
+          w.opener && w.opener.postMessage(
+            { type: "TL_AFTER_PRINT", printWinName: w.name || "", },
+            "*"
+          );
+        } else {
+          // If you don't want the prompt, just close (but delayed so it doesn't kill printing)
+          w.close();
+        }
+      } catch {}
+    }, 600);
+  };
+}
 }
 
 /**********************
@@ -976,6 +1001,12 @@ function toast(msg) {
   t.style.display = "block";
   toastTimer = setTimeout(() => { t.style.display = "none"; }, 1400);
 }
+
+// Receive "after print" ping from the print window and show Clear/Keep/Cancel in MAIN app
+window.addEventListener("message", (ev) => {
+  if (!ev || !ev.data || ev.data.type !== "TL_AFTER_PRINT") return;
+  showClearAfterPrintPrompt();
+});
 
 /**********************
  * 10) START
