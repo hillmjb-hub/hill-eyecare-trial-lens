@@ -1,4 +1,4 @@
-const CACHE_NAME = "cl-order-pwa-v13";
+const CACHE_NAME = "cl-order-pwa-v14";
 const ASSETS = ["./", "./index.html", "./app.js", "./manifest.json"];
 
 self.addEventListener("install", (event) => {

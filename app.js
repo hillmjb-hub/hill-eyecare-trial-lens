@@ -115,7 +115,7 @@ const CATALOG = [
     manufacturer: "Acuvue (J&J)",
     lenses: [
       { name: "Oasys", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
-      { name: "Vita", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
+      { name: "Vita  8.4 BC", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       {
         name: "Oasys for Astigmatism",
         type: "toric",
@@ -136,7 +136,7 @@ const CATALOG = [
         add: ["Low","Med","High"],
         sphere: makeSpherePowers(+6.00, -9.00, 0.25)
       },
-      { name: "Oasys Max 1-Day", type: "sphere", powers: makeSpherePowers(+6.00, -12.00, 0.25) }
+      { name: "Oasys Max 1-Day  8.5 BC", type: "sphere", powers: makeSpherePowers(+6.00, -12.00, 0.25) }
     ]
   },
   {
@@ -177,10 +177,11 @@ const CATALOG = [
   {
     manufacturer: "Alcon",
     lenses: [
-      { name: "Air Optix", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
+      { name: "Air Optix HydraGlyde", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       { name: "Total 30", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       { name: "Precision 7", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
-      { name: "Air Optix N&D", type: "sphere", powers: makeSpherePowers(+6.00, -10.00, 0.25) },
+      { name: "Air Optix N&D  8.4 BC", type: "sphere", powers: makeSpherePowers(+6.00, -10.00, 0.25) },
+      { name: "Air Optix N&D  8.6 BC", type: "sphere", powers: makeSpherePowers(+6.00, -10.00, 0.25) },
       { name: "Dailies Total 1", type: "sphere", powers: makeSpherePowers(+6.00, -12.00, 0.25) },
       { name: "Precision 1-Day", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       {
@@ -198,11 +199,37 @@ const CATALOG = [
         axis: makeAxisList(10)
       },
       {
+        name: "Precision 1-Day Toric",
+        type: "toric",
+        cylinder: ["-0.75","-1.25","-1.75"],
+        sphere: makeSpherePowers(+4.00, -8.00, 0.50),
+        axis: makeAxisList(10)
+      },
+      {
         name: "Total 30 Multifocal",
         type: "multifocal",
         add: ["Low","Med","High"],
         sphere: makeSpherePowers(+6.00, -10.00, 0.25)
       }
+      {
+        name: "Air Optix Colors",
+        type: "multifocal",
+        add: [
+          "Blue",
+          "Brilliant Blue",
+          "Green",
+          "Gemstone Green",
+          "True Sapphire",
+          "Turquoise",
+          "Brown",
+          "Pure Hazel",
+          "Amethyst",
+          "Gray",
+          "Sterling Gray",
+          "Honey"
+        ],
+        sphere: ["Plano"]
+      },
     ]
   },
   {
