@@ -828,7 +828,8 @@ function cmpNum(x, y) {
 function parseCyl(cylStr) {
   // "-1.25" -> -1.25
   const n = Number(String(cylStr || "").trim());
-  return Number.isFinite(n) ? n : NaN;
+  // Use absolute value so -0.75 comes before -1.25, etc.
+  return Number.isFinite(n) ? Math.abs(n) : NaN;
 }
 
 function parseSphere(sphStr) {
