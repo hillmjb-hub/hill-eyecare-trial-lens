@@ -759,19 +759,114 @@ function formatPrintLine(item) {
   return `${item.lens}`;
 }
 function getSortedCartForExport() {
-  return [...state.cart].sort((a, b) => {
-    const m = (a.manufacturer || "").localeCompare(b.manufacturer || "", undefined, { sensitivity: "base" });
-    if (m !== 0) return m;
-    const l = (a.lens || "").localeCompare(b.lens || "", undefined, { sensitivity: "base" });
-    if (l !== 0) return l;
-    const s = (a.sphere || "").localeCompare(b.sphere || "");
-    if (s !== 0) return s;
-    const c = (a.cylinder || "").localeCompare(b.cylinder || "");
-    if (c !== 0) return c;
-    const ax = (a.axis || "").localeCompare(b.axis || "");
-    if (ax !== 0) return ax;
-    return (a.add || "").localeCompare(b.add || "");
-  });
+  return [...state.cart].sort(exportComparator);
+}
+
+function exportComparator(a, b) {
+  // 1) Manufacturer
+  let r = cmpText(a.manufacturer, b.manufacturer);
+  if (r) return r;
+
+  // 2) Lens name
+  r = cmpText(a.lens, b.lens);
+  if (r) return r;
+
+  // 3) Type order within the same lens
+  // Change the order here if you want torics first, etc.
+  const typeRank = { sphere: 0, toric: 1, multifocal: 2 };
+  r = (typeRank[a.type] ?? 9) - (typeRank[b.type] ?? 9);
+  if (r) return r;
+
+  // 4) Type-specific grouping
+  if (a.type === "toric") {
+    // Group cylinder first: -0.75, -1.25, -1.75...
+    r = cmpNum(parseCyl(a.cylinder), parseCyl(b.cylinder));
+    if (r) return r;
+
+    // Then sphere (optional: sort plus to minus, or numeric ascending)
+    r = cmpNum(parseSphere(a.sphere), parseSphere(b.sphere));
+    if (r) return r;
+
+    // Then axis numeric
+    r = cmpNum(parseAxis(a.axis), parseAxis(b.axis));
+    if (r) return r;
+
+    return 0;
+  }
+
+  if (a.type === "multifocal") {
+    // Group add first: Low/Med/High OR +1.00 D/N, etc.
+    r = cmpNum(addSortKey(a.add), addSortKey(b.add));
+    if (r) return r;
+
+    // Then sphere
+    r = cmpNum(parseSphere(a.sphere), parseSphere(b.sphere));
+    if (r) return r;
+
+    return 0;
+  }
+
+  // Sphere lenses: just sort by sphere
+  r = cmpNum(parseSphere(a.sphere), parseSphere(b.sphere));
+  if (r) return r;
+
+  return 0;
+}
+
+/* ---------- helpers ---------- */
+
+function cmpText(x, y) {
+  return String(x || "").localeCompare(String(y || ""), undefined, { sensitivity: "base" });
+}
+function cmpNum(x, y) {
+  // Put NaN values at the bottom
+  const ax = Number.isFinite(x) ? x : 1e9;
+  const ay = Number.isFinite(y) ? y : 1e9;
+  return ax - ay;
+}
+
+function parseCyl(cylStr) {
+  // "-1.25" -> -1.25
+  const n = Number(String(cylStr || "").trim());
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function parseSphere(sphStr) {
+  // "+2.00" -> 2, "-1.50" -> -1.5
+  const n = Number(String(sphStr || "").trim());
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function parseAxis(axisStr) {
+  // "070" -> 70
+  const n = Number(String(axisStr || "").replace(/[^\d]/g, ""));
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function addSortKey(addStr) {
+  const s = String(addStr || "").trim().toLowerCase();
+
+  // Low/Med/High (common)
+  if (s === "low") return 100;
+  if (s === "med" || s === "medium") return 200;
+  if (s === "high") return 300;
+
+  // Handle "+1.00 D" / "+2.50 N" etc.
+  // Sort primarily by numeric value, then D before N
+  // +1.00 D -> 1.00 * 1000 + 0
+  // +1.00 N -> 1.00 * 1000 + 1
+  const m = s.match(/([+-]?\d+(\.\d+)?)/);
+  if (m) {
+    const val = Number(m[1]);
+    const designator = s.includes(" n") || s.endsWith("n") ? 1 : 0; // D first, then N
+    if (Number.isFinite(val)) return val * 1000 + designator;
+  }
+
+  // Fallback: alphabetical (put these after Low/Med/High)
+  // Convert string to a stable numeric-ish key
+  let hash = 500000;
+  for (let i = 0; i < s.length; i++) hash += s.charCodeAt(i);
+  return hash;
 }
 
 function renderCart() {
