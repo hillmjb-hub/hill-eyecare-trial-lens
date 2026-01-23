@@ -154,6 +154,13 @@ const CATALOG = [
         axis: makeAxisList(10)
       },
       {
+        name: "Biofinity XR Toric",
+        type: "toric",
+        cylinder: ["-2.75","-3.25","-3.75"],
+        sphere: makeSpherePowers(0.00, -6.00, 0.50),
+        axis: ["005","010","020","090","160","170","175","180"]
+      },
+      {
         name: "Biofinity Multifocal",
         type: "multifocal",
         add: ["+1.00 D","+1.50 D","+2.00 D","+2.50 D","+1.00 N","+1.50 N","+2.00 N","+2.50 N"],
