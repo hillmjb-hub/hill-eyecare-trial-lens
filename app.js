@@ -262,7 +262,13 @@ const CATALOG = [
         name: "Infuse 1-Day Toric",
         type: "toric",
         cylinder: ["-0.75","-1.25","-1.75","-2.25","-2.75"],
-        sphere: makeSpherePowers(+4.00, -8.00, 0.50),
+        sphere: [
+  ...makeSpherePowers(+4.00, -8.00, 0.50),
+  "-1.75",
+  "-2.25",
+  "-2.75",
+  "-3.25"
+].sort((a, b) => Number(a) - Number(b)),
         axis: makeAxisList(10)
       },
       {
