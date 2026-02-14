@@ -114,8 +114,10 @@ const CATALOG = [
   {
     manufacturer: "Acuvue (J&J)",
     lenses: [
-      { name: "Oasys", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
+      { name: "Oasys  8.4 BC", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
+      { name: "Oasys  8.8 BC", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       { name: "Vita  8.4 BC", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
+      { name: "Vita  8.8 BC", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       {
         name: "Oasys for Astigmatism",
         type: "toric",
