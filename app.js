@@ -192,6 +192,12 @@ const CATALOG = [
       { name: "Air Optix N&D  8.4 BC", type: "sphere", powers: makeSpherePowers(+6.00, -10.00, 0.25) },
       { name: "Air Optix N&D  8.6 BC", type: "sphere", powers: makeSpherePowers(+6.00, -10.00, 0.25) },
       { name: "Dailies Total 1", type: "sphere", powers: makeSpherePowers(+6.00, -12.00, 0.25) },
+      {
+        name: "Dailies Total 1 Multifocal",
+        type: "multifocal",
+        add: ["Low","Med","High"],
+        sphere: makeSpherePowers(+6.00, -10.00, 0.25)
+      },
       { name: "Precision 1-Day", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       {
         name: "Total 30 Toric",
