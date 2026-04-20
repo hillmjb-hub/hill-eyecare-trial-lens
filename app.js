@@ -148,6 +148,7 @@ const CATALOG = [
       { name: "Biofinity Energys", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       { name: "MiSight", type: "sphere", powers: makeSpherePowers(-0.25, -6.00, 0.25) },
       { name: "Kirkland Signature (MyDay)", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
+      { name: "MyDay Energys (8.4 BC)", type: "sphere", powers: makeSpherePowers(+8.00, -12.00, 0.25) },
       {
         name: "Biofinity Toric",
         type: "toric",
