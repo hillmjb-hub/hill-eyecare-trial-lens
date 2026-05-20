@@ -128,7 +128,7 @@ const CATALOG = [
       {
         name: "Vita for Astigmatism",
         type: "toric",
-        cylinder: ["-0.75","-1.25","-1.75","-2.25","-2.75],
+        cylinder: ["-0.75","-1.25","-1.75","-2.25","-2.75"],
         sphere: makeSpherePowers(+6.00, -9.00, 0.50),
         axis: makeAxisList(10)
       },
