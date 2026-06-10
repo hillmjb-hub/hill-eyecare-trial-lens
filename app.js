@@ -801,20 +801,48 @@ function exportComparator(a, b) {
 
   // 4) Type-specific grouping
   if (a.type === "toric") {
-    // Group cylinder first: -0.75, -1.25, -1.75...
+  const manufacturer = String(a.manufacturer || "").toLowerCase();
+
+  // Acuvue: axis → cylinder → sphere
+  if (manufacturer.includes("acuvue")) {
+    r = cmpNum(parseAxis(a.axis), parseAxis(b.axis));
+    if (r) return r;
+
     r = cmpNum(parseCyl(a.cylinder), parseCyl(b.cylinder));
     if (r) return r;
 
-    // Then sphere (optional: sort plus to minus, or numeric ascending)
     r = cmpNum(parseSphere(a.sphere), parseSphere(b.sphere));
-    if (r) return r;
-
-    // Then axis numeric
-    r = cmpNum(parseAxis(a.axis), parseAxis(b.axis));
     if (r) return r;
 
     return 0;
   }
+
+  // Alcon: cylinder → axis → sphere
+  if (manufacturer.includes("alcon")) {
+    r = cmpNum(parseCyl(a.cylinder), parseCyl(b.cylinder));
+    if (r) return r;
+
+    r = cmpNum(parseAxis(a.axis), parseAxis(b.axis));
+    if (r) return r;
+
+    r = cmpNum(parseSphere(a.sphere), parseSphere(b.sphere));
+    if (r) return r;
+
+    return 0;
+  }
+
+  // B&L + CooperVision: sphere → cylinder → axis
+  r = cmpNum(parseSphere(a.sphere), parseSphere(b.sphere));
+  if (r) return r;
+
+  r = cmpNum(parseCyl(a.cylinder), parseCyl(b.cylinder));
+  if (r) return r;
+
+  r = cmpNum(parseAxis(a.axis), parseAxis(b.axis));
+  if (r) return r;
+
+  return 0;
+}
 
   if (a.type === "multifocal") {
     // Group add first: Low/Med/High OR +1.00 D/N, etc.
