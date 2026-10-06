@@ -217,7 +217,7 @@ const CATALOG = [
       {
         name: "Precision 1-Day Toric",
         type: "toric",
-        cylinder: ["-0.75","-1.25","-1.75"],
+        cylinder: ["-0.75","-1.25","-1.75", "-2.25", "-2.75"],
         sphere: makeSpherePowers(+4.00, -8.00, 0.50),
         axis: makeAxisList(10)
       },
